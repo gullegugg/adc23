@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::math::Point;
 
@@ -12,7 +12,7 @@ struct EngineNumber {
 #[derive(Debug, PartialEq)]
 enum SchematicPart {
     Number(EngineNumber),
-    Symbol(Point),
+    Symbol(Point, char),
 }
 
 fn to_digit(byte: u8) -> Option<u32> {
@@ -62,10 +62,10 @@ fn parse_schematic_part(
             ));
         } else {
             return Ok((
-                Some(SchematicPart::Symbol(Point::new(
-                    i.try_into()?,
-                    y.try_into()?,
-                ))),
+                Some(SchematicPart::Symbol(
+                    Point::new(i.try_into()?, y.try_into()?),
+                    line[i] as char,
+                )),
                 i + 1,
             ));
         }
@@ -76,9 +76,9 @@ fn parse_schematic_part(
 
 fn parse_schematic<T: Iterator<Item = Result<String, std::io::Error>>>(
     input: T,
-) -> anyhow::Result<(Vec<EngineNumber>, HashSet<Point>)> {
+) -> anyhow::Result<(Vec<EngineNumber>, HashMap<Point, char>)> {
     let mut numbers: Vec<EngineNumber> = Vec::new();
-    let mut symbols: HashSet<Point> = HashSet::new();
+    let mut symbols: HashMap<Point, char> = HashMap::new();
     let mut y = 0;
     for line in input {
         let mut index = 0;
@@ -93,8 +93,8 @@ fn parse_schematic<T: Iterator<Item = Result<String, std::io::Error>>>(
             match part {
                 Some(part) => match part {
                     SchematicPart::Number(num) => numbers.push(num),
-                    SchematicPart::Symbol(symbol) => {
-                        symbols.insert(symbol);
+                    SchematicPart::Symbol(pos, symbol) => {
+                        symbols.insert(pos, symbol);
                     }
                 },
                 None => break,
@@ -106,11 +106,11 @@ fn parse_schematic<T: Iterator<Item = Result<String, std::io::Error>>>(
     Ok((numbers, symbols))
 }
 
-fn is_part_number(number: &EngineNumber, symbols: &HashSet<Point>) -> bool {
+fn is_part_number(number: &EngineNumber, symbols: &HashMap<Point, char>) -> bool {
     for i in -1..number.len as i32 + 1 {
-        if symbols.contains(&(number.start + Point::new(i, -1)))
-            || symbols.contains(&(number.start + Point::new(i, 0)))
-            || symbols.contains(&(number.start + Point::new(i, 1)))
+        if symbols.contains_key(&(number.start + Point::new(i, -1)))
+            || symbols.contains_key(&(number.start + Point::new(i, 0)))
+            || symbols.contains_key(&(number.start + Point::new(i, 1)))
         {
             return true;
         }
@@ -127,6 +127,21 @@ fn sum_part_numbers<T: Iterator<Item = Result<String, std::io::Error>>>(
         .iter()
         .filter(|num| is_part_number(num, &symbols))
         .map(|num| num.value)
+        .sum())
+}
+
+fn gear_power(position: &Point, symbol: &char, numbers: &Vec<EngineNumber>) -> Option<u32> {
+    None
+}
+
+fn sum_gear_powers<T: Iterator<Item = Result<String, std::io::Error>>>(
+    input: T,
+) -> anyhow::Result<u32> {
+    let (numbers, symbols) = parse_schematic(input)?;
+
+    Ok(symbols
+        .iter()
+        .filter_map(|(pos, symbol)| gear_power(pos, symbol, &numbers))
         .sum())
 }
 
@@ -178,7 +193,7 @@ mod tests {
 
         // Then
         assert_eq!(next_index, 2);
-        assert_eq!(SchematicPart::Symbol(Point::new(1, 0)), part.unwrap());
+        assert_eq!(SchematicPart::Symbol(Point::new(1, 0), '*'), part.unwrap());
     }
 
     #[test]
@@ -221,7 +236,10 @@ mod tests {
             numbers
         );
 
-        assert_eq!(HashSet::from([Point::new(3, 1), Point::new(6, 3)]), symbols);
+        assert_eq!(
+            HashMap::from([(Point::new(3, 1), '*'), (Point::new(6, 3), '#')]),
+            symbols
+        );
     }
 
     #[test]
