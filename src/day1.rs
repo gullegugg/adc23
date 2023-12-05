@@ -45,12 +45,12 @@ fn get_digit(index: usize, line: &String) -> Option<u32> {
 }
 
 fn parse_calibration_value_advanced(line: String) -> Option<u32> {
-    let mut current_line = line.clone();
+    let current_line = line.clone();
     let mut first_digit: Option<u32> = None;
     let mut last_digit: u32 = 0;
 
     for index in 0..line.len() {
-        if let Some(digit) = get_digit(index, &mut current_line) {
+        if let Some(digit) = get_digit(index, &current_line) {
             match first_digit {
                 None => {
                     first_digit = Some(digit);
