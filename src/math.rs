@@ -8,6 +8,10 @@ impl Point {
     pub fn new(x: i32, y: i32) -> Self {
         Point { x, y }
     }
+
+    pub fn adjacent(&self, other: &Point) -> bool {
+        self.x.abs_diff(other.x) <= 1 && self.y.abs_diff(other.y) <= 1
+    }
 }
 
 impl std::fmt::Display for Point {

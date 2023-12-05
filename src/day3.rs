@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::math::Point;
 
@@ -131,7 +131,24 @@ fn sum_part_numbers<T: Iterator<Item = Result<String, std::io::Error>>>(
 }
 
 fn gear_power(position: &Point, symbol: &char, numbers: &Vec<EngineNumber>) -> Option<u32> {
-    None
+    if *symbol != '*' {
+        return None;
+    }
+
+    let adjacent_numbers: Vec<&EngineNumber> = numbers
+        .iter()
+        .filter(|num| {
+            (0..num.len)
+                .map(|i| num.start + Point::new(i as i32, 0))
+                .any(|num_pos| position.adjacent(&num_pos))
+        })
+        .collect();
+
+    if adjacent_numbers.len() != 2 {
+        return None;
+    }
+
+    Some(adjacent_numbers.iter().map(|num| num.value).product())
 }
 
 fn sum_gear_powers<T: Iterator<Item = Result<String, std::io::Error>>>(
@@ -151,6 +168,7 @@ pub fn challenge<T: Iterator<Item = Result<String, std::io::Error>>>(
 ) -> anyhow::Result<u32> {
     match part {
         1 => sum_part_numbers(input),
+        2 => sum_gear_powers(input),
         _ => Ok(0),
     }
 }
@@ -201,10 +219,9 @@ mod tests {
         // Given
         let binding = vec!["467..114..", "...*......", "..35..633.", "......#..."];
 
-        let input = binding.iter().map(|line| {
-            println!("{}", line);
-            Ok::<_, std::io::Error>(line.to_string())
-        });
+        let input = binding
+            .iter()
+            .map(|line| Ok::<_, std::io::Error>(line.to_string()));
 
         // When
         let (numbers, symbols) = parse_schematic(input).unwrap();
@@ -257,15 +274,40 @@ mod tests {
             "...$.*....",
             ".664.598..",
         ];
-        let input = binding.iter().map(|line| {
-            println!("{}", line);
-            Ok::<_, std::io::Error>(line.to_string())
-        });
+        let input = binding
+            .iter()
+            .map(|line| Ok::<_, std::io::Error>(line.to_string()));
 
         // When
         let sum = sum_part_numbers(input).unwrap();
 
         // Then
         assert_eq!(4361, sum);
+    }
+
+    #[test]
+    fn verify_sum_gears() {
+        // Given
+        let binding = vec![
+            "467..114..",
+            "...*......",
+            "..35..633.",
+            "......#...",
+            "617*......",
+            ".....+.58.",
+            "..592.....",
+            "......755.",
+            "...$.*....",
+            ".664.598..",
+        ];
+        let input = binding
+            .iter()
+            .map(|line| Ok::<_, std::io::Error>(line.to_string()));
+
+        // When
+        let sum = challenge(2, input).unwrap();
+
+        // Then
+        assert_eq!(467835, sum);
     }
 }
