@@ -78,18 +78,9 @@ impl Almenac {
     }
 }
 
-fn parse_almenac<T: Iterator<Item = Result<String, std::io::Error>>>(
+fn parse_maps<T: Iterator<Item = Result<String, std::io::Error>>>(
     input: &mut T,
-) -> anyhow::Result<Almenac> {
-    let seeds: Vec<u32> = input
-        .next()
-        .ok_or(Error::InvalidInput("Seeds line missing".into()))??
-        .trim()
-        .split(' ')
-        .skip(1)
-        .map(|str_num| str_num.parse::<u32>())
-        .collect::<Result<_, _>>()?;
-
+) -> anyhow::Result<Vec<CategoryMap>> {
     let mut category_maps: Vec<CategoryMap> = Vec::new();
 
     while let Some(line_res) = input.next() {
@@ -111,9 +102,52 @@ fn parse_almenac<T: Iterator<Item = Result<String, std::io::Error>>>(
         }
     }
 
+    Ok(category_maps)
+}
+
+fn parse_almenac<T: Iterator<Item = Result<String, std::io::Error>>>(
+    input: &mut T,
+) -> anyhow::Result<Almenac> {
+    let seeds: Vec<u32> = input
+        .next()
+        .ok_or(Error::InvalidInput("Seeds line missing".into()))??
+        .trim()
+        .split(' ')
+        .skip(1)
+        .map(|str_num| str_num.parse::<u32>())
+        .collect::<Result<_, _>>()?;
+
     Ok(Almenac {
         seeds,
-        category_maps,
+        category_maps: parse_maps(input)?,
+    })
+}
+
+fn parse_almenac_2<T: Iterator<Item = Result<String, std::io::Error>>>(
+    input: &mut T,
+) -> anyhow::Result<Almenac> {
+    let seeds_ranges: Vec<u32> = input
+        .next()
+        .ok_or(Error::InvalidInput("Seeds line missing".into()))??
+        .trim()
+        .split(' ')
+        .skip(1)
+        .map(|str_num| str_num.parse::<u32>())
+        .collect::<Result<_, _>>()?;
+
+    let mut seeds: Vec<u32> = Vec::new();
+
+    for i in (0..seeds_ranges.len()).step_by(2) {
+        for seed_offset in 0..seeds_ranges[i + 1] {
+            seeds.push(seeds_ranges[i] + seed_offset);
+        }
+    }
+
+    println!("Num seeds: {}", seeds.len());
+
+    Ok(Almenac {
+        seeds,
+        category_maps: parse_maps(input)?,
     })
 }
 
@@ -130,11 +164,13 @@ pub fn challenge<T: Iterator<Item = Result<String, std::io::Error>>>(
     part: u32,
     input: &mut T,
 ) -> anyhow::Result<u32> {
-    let almenac = parse_almenac(input)?;
-    match part {
-        1 => lowest_location(almenac),
-        _ => Ok(0),
-    }
+    let almenac = match part {
+        1 => parse_almenac(input)?,
+        2 => parse_almenac_2(input)?,
+        _ => return Ok(0),
+    };
+
+    lowest_location(almenac)
 }
 
 #[cfg(test)]
