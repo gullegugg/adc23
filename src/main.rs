@@ -32,6 +32,14 @@ fn day3(part: u32) -> anyhow::Result<()> {
     Ok(())
 }
 
+fn day4(part: u32) -> anyhow::Result<()> {
+    let sum = adc23::day4::challenge(part, std::io::stdin().lines())?;
+
+    println!("Sum is {}", sum);
+
+    Ok(())
+}
+
 fn main() -> anyhow::Result<()> {
     let day: u32 = std::env::args().nth(1).ok_or(Error::MissingArg)?.parse()?;
     let part: u32 = std::env::args().nth(2).ok_or(Error::MissingArg)?.parse()?;
@@ -40,6 +48,7 @@ fn main() -> anyhow::Result<()> {
         1 => day1(part)?,
         2 => day2(part)?,
         3 => day3(part)?,
+        4 => day4(part)?,
         _ => eprintln!("Day {} not implemented", day),
     };
 

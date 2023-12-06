@@ -17,10 +17,12 @@ fn parse_games<T: Iterator<Item = String>>(lines: T) -> anyhow::Result<Vec<Game>
     for line in lines {
         let (id_str, sets) = line
             .split_once(':')
-            .ok_or(Error::InvalidInput("Missing :"))?;
+            .ok_or(Error::InvalidInput("Missing :".to_string()))?;
         let id: u32 = id_str
             .split_once(' ')
-            .ok_or(Error::InvalidInput("Missing whitespace in game id"))?
+            .ok_or(Error::InvalidInput(
+                "Missing whitespace in game id".to_string(),
+            ))?
             .1
             .parse()?;
 
@@ -32,9 +34,9 @@ fn parse_games<T: Iterator<Item = String>>(lines: T) -> anyhow::Result<Vec<Game>
                 red: 0,
             };
             for cube_count in set.split(',').map(|it| it.trim()) {
-                let (count_str, color) = cube_count
-                    .split_once(' ')
-                    .ok_or(Error::InvalidInput("Missing whitespace in cube count"))?;
+                let (count_str, color) = cube_count.split_once(' ').ok_or(Error::InvalidInput(
+                    "Missing whitespace in cube count".to_string(),
+                ))?;
                 let count: u32 = count_str.parse()?;
                 match color {
                     "blue" => {
@@ -46,7 +48,9 @@ fn parse_games<T: Iterator<Item = String>>(lines: T) -> anyhow::Result<Vec<Game>
                     "green" => {
                         parsed_set.green = count;
                     }
-                    _ => Err(Error::InvalidInput("Invalid color in cube count"))?,
+                    _ => Err(Error::InvalidInput(
+                        "Invalid color in cube count".to_string(),
+                    ))?,
                 }
             }
             parsed_sets.push(parsed_set);
