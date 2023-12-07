@@ -74,16 +74,15 @@ fn parse_schematic_part(
     Ok((None, line.len()))
 }
 
-fn parse_schematic<T: Iterator<Item = Result<String, std::io::Error>>>(
-    input: T,
+fn parse_schematic(
+    input: Vec<String>,
 ) -> anyhow::Result<(Vec<EngineNumber>, HashMap<Point, char>)> {
     let mut numbers: Vec<EngineNumber> = Vec::new();
     let mut symbols: HashMap<Point, char> = HashMap::new();
     let mut y = 0;
     for line in input {
         let mut index = 0;
-        let good_line = line?;
-        let byte_line = good_line.as_bytes();
+        let byte_line = line.as_bytes();
 
         while index < byte_line.len() {
             let (part, next_index) = parse_schematic_part(byte_line, index, y)?;
@@ -118,9 +117,7 @@ fn is_part_number(number: &EngineNumber, symbols: &HashMap<Point, char>) -> bool
     false
 }
 
-fn sum_part_numbers<T: Iterator<Item = Result<String, std::io::Error>>>(
-    input: T,
-) -> anyhow::Result<u32> {
+fn sum_part_numbers(input: Vec<String>) -> anyhow::Result<u32> {
     let (numbers, symbols) = parse_schematic(input)?;
 
     Ok(numbers
@@ -151,9 +148,7 @@ fn gear_power(position: &Point, symbol: &char, numbers: &Vec<EngineNumber>) -> O
     Some(adjacent_numbers.iter().map(|num| num.value).product())
 }
 
-fn sum_gear_powers<T: Iterator<Item = Result<String, std::io::Error>>>(
-    input: T,
-) -> anyhow::Result<u32> {
+fn sum_gear_powers(input: Vec<String>) -> anyhow::Result<u32> {
     let (numbers, symbols) = parse_schematic(input)?;
 
     Ok(symbols
@@ -162,10 +157,7 @@ fn sum_gear_powers<T: Iterator<Item = Result<String, std::io::Error>>>(
         .sum())
 }
 
-pub fn challenge<T: Iterator<Item = Result<String, std::io::Error>>>(
-    part: u32,
-    input: T,
-) -> anyhow::Result<u32> {
+pub fn challenge(part: u32, input: Vec<String>) -> anyhow::Result<u32> {
     match part {
         1 => sum_part_numbers(input),
         2 => sum_gear_powers(input),
@@ -219,9 +211,7 @@ mod tests {
         // Given
         let binding = vec!["467..114..", "...*......", "..35..633.", "......#..."];
 
-        let input = binding
-            .iter()
-            .map(|line| Ok::<_, std::io::Error>(line.to_string()));
+        let input = binding.iter().map(|line| line.to_string()).collect();
 
         // When
         let (numbers, symbols) = parse_schematic(input).unwrap();
@@ -274,9 +264,7 @@ mod tests {
             "...$.*....",
             ".664.598..",
         ];
-        let input = binding
-            .iter()
-            .map(|line| Ok::<_, std::io::Error>(line.to_string()));
+        let input = binding.iter().map(|line| line.to_string()).collect();
 
         // When
         let sum = sum_part_numbers(input).unwrap();
@@ -300,9 +288,7 @@ mod tests {
             "...$.*....",
             ".664.598..",
         ];
-        let input = binding
-            .iter()
-            .map(|line| Ok::<_, std::io::Error>(line.to_string()));
+        let input = binding.iter().map(|line| line.to_string()).collect();
 
         // When
         let sum = challenge(2, input).unwrap();

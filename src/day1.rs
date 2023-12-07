@@ -15,8 +15,8 @@ fn parse_calibration_value(line: String) -> Option<u32> {
     first_digit.map(|it| it * 10 + last_digit)
 }
 
-fn sum_values_part_1<T: Iterator<Item = String>>(lines: T) -> u32 {
-    return lines.filter_map(parse_calibration_value).sum();
+fn sum_values_part_1(lines: Vec<String>) -> u32 {
+    return lines.into_iter().filter_map(parse_calibration_value).sum();
 }
 
 struct Digit(&'static str, u32);
@@ -64,11 +64,14 @@ fn parse_calibration_value_advanced(line: String) -> Option<u32> {
     first_digit.map(|it| it * 10 + last_digit)
 }
 
-fn sum_values_part_2<T: Iterator<Item = String>>(lines: T) -> u32 {
-    return lines.filter_map(parse_calibration_value_advanced).sum();
+fn sum_values_part_2(lines: Vec<String>) -> u32 {
+    return lines
+        .into_iter()
+        .filter_map(parse_calibration_value_advanced)
+        .sum();
 }
 
-pub fn sum_calibration_values<T: Iterator<Item = String>>(part: u32, lines: T) -> u32 {
+pub fn sum_calibration_values(part: u32, lines: Vec<String>) -> u32 {
     match part {
         1 => sum_values_part_1(lines),
         2 => sum_values_part_2(lines),
@@ -91,7 +94,7 @@ mod test {
         ];
 
         // When
-        let sum = sum_calibration_values(1, lines.into_iter());
+        let sum = sum_calibration_values(1, lines);
 
         // Then
         assert_eq!(sum, 142);
@@ -111,7 +114,7 @@ mod test {
         ];
 
         // When
-        let sum = sum_calibration_values(2, lines.into_iter());
+        let sum = sum_calibration_values(2, lines);
 
         // Then
         assert_eq!(sum, 29 + 83 + 13 + 24 + 42 + 14 + 76);
@@ -146,7 +149,10 @@ mod test {
         24";
 
         // When
-        let sum = sum_calibration_values(2, input.split_whitespace().map(|it| it.to_string()));
+        let sum = sum_calibration_values(
+            2,
+            input.split_whitespace().map(|it| it.to_string()).collect(),
+        );
 
         // Then
         assert_eq!(

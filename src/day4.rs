@@ -59,12 +59,10 @@ impl FromStr for Card {
     }
 }
 
-fn sum_winning_cards<T: Iterator<Item = Result<String, std::io::Error>>>(
-    input: T,
-) -> anyhow::Result<u32> {
+fn sum_winning_cards(input: Vec<String>) -> anyhow::Result<u32> {
     let mut sum = 0;
     for line in input {
-        let card: Card = line?.parse()?;
+        let card: Card = line.parse()?;
         let winning_count = card.winning_count();
         if winning_count > 0 {
             sum += 2_u32.pow(winning_count - 1)
@@ -74,13 +72,11 @@ fn sum_winning_cards<T: Iterator<Item = Result<String, std::io::Error>>>(
     Ok(sum)
 }
 
-fn count_winning_cards<T: Iterator<Item = Result<String, std::io::Error>>>(
-    input: T,
-) -> anyhow::Result<u32> {
+fn count_winning_cards(input: Vec<String>) -> anyhow::Result<u32> {
     let mut card_amount_map: HashMap<usize, u32> = HashMap::new();
     let mut num_cards = 0;
-    for (i, line) in input.enumerate() {
-        let card: Card = line?.parse()?;
+    for (i, line) in input.iter().enumerate() {
+        let card: Card = line.parse()?;
         let winning_count = card.winning_count();
         let card_count = card_amount_map.get(&i).unwrap_or(&0) + 1;
 
@@ -102,10 +98,7 @@ fn count_winning_cards<T: Iterator<Item = Result<String, std::io::Error>>>(
         .sum())
 }
 
-pub fn challenge<T: Iterator<Item = Result<String, std::io::Error>>>(
-    part: u32,
-    input: T,
-) -> anyhow::Result<u32> {
+pub fn challenge(part: u32, input: Vec<String>) -> anyhow::Result<u32> {
     match part {
         1 => sum_winning_cards(input),
         2 => count_winning_cards(input),
@@ -128,9 +121,7 @@ mod tests {
             "Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36",
             "Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11",
         ];
-        let input = binding
-            .iter()
-            .map(|it| Ok::<_, std::io::Error>(it.to_string()));
+        let input = binding.iter().map(|line| line.to_string()).collect();
 
         // When
         let sum = challenge(1, input).unwrap();
@@ -150,9 +141,7 @@ mod tests {
             "Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36",
             "Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11",
         ];
-        let input = binding
-            .iter()
-            .map(|it| Ok::<_, std::io::Error>(it.to_string()));
+        let input = binding.iter().map(|line| line.to_string()).collect();
 
         // When
         let sum = challenge(2, input).unwrap();

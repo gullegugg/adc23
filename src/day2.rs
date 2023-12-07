@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::Error;
 
 struct Set {
@@ -11,10 +13,10 @@ struct Game {
     sets: Vec<Set>,
 }
 
-fn parse_games<T: Iterator<Item = String>>(lines: T) -> anyhow::Result<Vec<Game>> {
-    let mut games: Vec<Game> = Vec::new();
+impl FromStr for Game {
+    type Err = anyhow::Error;
 
-    for line in lines {
+    fn from_str(line: &str) -> Result<Self, Self::Err> {
         let (id_str, sets) = line
             .split_once(':')
             .ok_or(Error::InvalidInput("Missing :".to_string()))?;
@@ -55,25 +57,30 @@ fn parse_games<T: Iterator<Item = String>>(lines: T) -> anyhow::Result<Vec<Game>
             }
             parsed_sets.push(parsed_set);
         }
-        games.push(Game {
+        Ok(Game {
             id,
             sets: parsed_sets,
         })
     }
-
-    Ok(games)
 }
 
-fn sum_valid_ids(games: Vec<Game>) -> u32 {
-    games
-        .iter()
-        .filter(|game| {
-            game.sets
-                .iter()
-                .all(|set| set.blue <= 14 && set.green <= 13 && set.red <= 12)
-        })
-        .map(|game| game.id)
-        .sum()
+fn parse_games(lines: Vec<String>) -> impl Iterator<Item = anyhow::Result<Game>> {
+    lines.into_iter().map(|line| line.parse())
+}
+
+fn sum_valid_ids<Iter: Iterator<Item = anyhow::Result<Game>>>(games: Iter) -> anyhow::Result<u32> {
+    let mut sum = 0;
+    for game_res in games {
+        let game = game_res?;
+        if game
+            .sets
+            .iter()
+            .all(|set| set.blue <= 14 && set.green <= 13 && set.red <= 12)
+        {
+            sum += game.id
+        }
+    }
+    Ok(sum)
 }
 
 fn max_by<F: Fn(&Set) -> u32>(sets: &Vec<Set>, by_key: F) -> u32 {
@@ -84,25 +91,26 @@ fn max_by<F: Fn(&Set) -> u32>(sets: &Vec<Set>, by_key: F) -> u32 {
         .unwrap_or(1)
 }
 
-fn power_of_min(games: Vec<Game>) -> u32 {
-    games
-        .iter()
-        .map(|game| {
-            let red = max_by(&game.sets, |set| set.red);
-            let blue = max_by(&game.sets, |set| set.blue);
-            let green = max_by(&game.sets, |set| set.green);
+fn power_of_min<Iter: Iterator<Item = anyhow::Result<Game>>>(games: Iter) -> anyhow::Result<u32> {
+    let mut sum = 0;
+    for game_res in games {
+        let game = game_res?;
+        let red = max_by(&game.sets, |set| set.red);
+        let blue = max_by(&game.sets, |set| set.blue);
+        let green = max_by(&game.sets, |set| set.green);
 
-            red * green * blue
-        })
-        .sum()
+        sum += red * green * blue;
+    }
+
+    Ok(sum)
 }
 
-pub fn elf_challenge<T: Iterator<Item = String>>(part: u32, lines: T) -> anyhow::Result<u32> {
-    let games = parse_games(lines)?;
+pub fn elf_challenge(part: u32, lines: Vec<String>) -> anyhow::Result<u32> {
+    let games = parse_games(lines);
 
     Ok(match part {
-        1 => sum_valid_ids(games),
-        2 => power_of_min(games),
+        1 => sum_valid_ids(games)?,
+        2 => power_of_min(games)?,
         _ => 0,
     })
 }
@@ -120,7 +128,8 @@ Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
 Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"
             .lines()
-            .map(|it| it.to_string());
+            .map(|it| it.to_string())
+            .collect();
 
         // When
         let sum = elf_challenge(1, input).unwrap();
@@ -138,7 +147,8 @@ Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
 Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"
             .lines()
-            .map(|it| it.to_string());
+            .map(|it| it.to_string())
+            .collect();
 
         // When
         let sum = elf_challenge(2, input).unwrap();
