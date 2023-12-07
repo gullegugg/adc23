@@ -1,9 +1,10 @@
-use std::{cmp::Ordering, collections::HashMap, str::FromStr};
+use std::{cmp::Ordering, collections::HashMap, fmt::Display, str::FromStr};
 
 use crate::Error;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 enum Card {
+    J,
     Two,
     Three,
     Four,
@@ -13,7 +14,6 @@ enum Card {
     Eight,
     Nine,
     T,
-    J,
     Q,
     K,
     A,
@@ -45,6 +45,28 @@ impl TryFrom<char> for Card {
     }
 }
 
+impl Display for Card {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let c_value = match self {
+            Card::J => 'J',
+            Card::Two => '2',
+            Card::Three => '3',
+            Card::Four => '4',
+            Card::Five => '5',
+            Card::Six => '6',
+            Card::Seven => '7',
+            Card::Eight => '8',
+            Card::Nine => '9',
+            Card::T => 'T',
+            Card::Q => 'Q',
+            Card::K => 'K',
+            Card::A => 'A',
+        };
+
+        write!(f, "{}", c_value)
+    }
+}
+
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 enum HandType {
     HighCard,
@@ -69,6 +91,23 @@ impl Hand {
             count_map.insert(card.clone(), current + 1);
         }
 
+        if count_map.len() == 1 {
+            return HandType::FiveOfAKind;
+        }
+
+        if let Some(joker_count) = count_map.get(&Card::J).map(|it| *it) {
+            count_map.remove(&Card::J);
+
+            let mut count_vec: Vec<(&Card, &u32)> = count_map.iter().collect();
+
+            count_vec.sort_by(|a, b| a.1.cmp(b.1));
+
+            let highest = count_vec[count_vec.len() - 1];
+
+            count_map.insert(highest.0.clone(), highest.1 + joker_count);
+        }
+
+        // Might be different after jokers
         if count_map.len() == 1 {
             return HandType::FiveOfAKind;
         }
@@ -158,6 +197,16 @@ impl PartialOrd for Hand {
     }
 }
 
+impl Display for Hand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}{}{}{}{} {}",
+            self.cards[0], self.cards[1], self.cards[2], self.cards[3], self.cards[4], self.bid
+        )
+    }
+}
+
 fn parse_hands<T: Iterator<Item = Result<String, std::io::Error>>>(
     input: T,
 ) -> anyhow::Result<Vec<Hand>> {
@@ -170,6 +219,11 @@ fn parse_hands<T: Iterator<Item = Result<String, std::io::Error>>>(
 
 fn total_winnings(hands: &mut Vec<Hand>) -> u32 {
     hands.sort();
+
+    println!("Sorted: ");
+    for hand in hands.iter() {
+        println!("{}", hand);
+    }
 
     let mut sum: u32 = 0;
     for (i, hand) in hands.iter().enumerate() {
@@ -191,7 +245,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn part1_example() {
+    fn part2_example() {
         // Given
         let binding = vec![
             "32T3K 765",
@@ -210,6 +264,6 @@ mod tests {
         .unwrap();
 
         // Then
-        assert_eq!(6440, total);
+        assert_eq!(5905, total);
     }
 }
