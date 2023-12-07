@@ -57,11 +57,7 @@ fn day6(part: u32) -> anyhow::Result<()> {
 }
 
 fn day7(part: u32) -> anyhow::Result<()> {
-    let sum = match part {
-        1 => adc23::day7::challenge(&mut std::io::stdin().lines()),
-        2 => adc23::day7_2::challenge(&mut std::io::stdin().lines()),
-        _ => Ok(0),
-    }?;
+    let sum = adc23::day7::challenge(part, &mut std::io::stdin().lines())?;
 
     println!("Sum is {}", sum);
 

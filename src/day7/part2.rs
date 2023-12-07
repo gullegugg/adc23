@@ -1,9 +1,12 @@
-use std::{cmp::Ordering, collections::HashMap, str::FromStr};
+use std::{cmp::Ordering, collections::HashMap, fmt::Display, str::FromStr};
 
 use crate::Error;
 
+use super::Hand;
+
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 enum Card {
+    J,
     Two,
     Three,
     Four,
@@ -13,7 +16,6 @@ enum Card {
     Eight,
     Nine,
     T,
-    J,
     Q,
     K,
     A,
@@ -45,6 +47,28 @@ impl TryFrom<char> for Card {
     }
 }
 
+impl Display for Card {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let c_value = match self {
+            Card::J => 'J',
+            Card::Two => '2',
+            Card::Three => '3',
+            Card::Four => '4',
+            Card::Five => '5',
+            Card::Six => '6',
+            Card::Seven => '7',
+            Card::Eight => '8',
+            Card::Nine => '9',
+            Card::T => 'T',
+            Card::Q => 'Q',
+            Card::K => 'K',
+            Card::A => 'A',
+        };
+
+        write!(f, "{}", c_value)
+    }
+}
+
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 enum HandType {
     HighCard,
@@ -56,12 +80,12 @@ enum HandType {
     FiveOfAKind,
 }
 
-struct Hand {
+pub struct Part2Hand {
     cards: Vec<Card>,
     bid: u32,
 }
 
-impl Hand {
+impl Part2Hand {
     fn hand_type(&self) -> HandType {
         let mut count_map: HashMap<Card, u32> = HashMap::new();
         for card in self.cards.iter() {
@@ -69,6 +93,23 @@ impl Hand {
             count_map.insert(card.clone(), current + 1);
         }
 
+        if count_map.len() == 1 {
+            return HandType::FiveOfAKind;
+        }
+
+        if let Some(joker_count) = count_map.get(&Card::J).map(|it| *it) {
+            count_map.remove(&Card::J);
+
+            let mut count_vec: Vec<(&Card, &u32)> = count_map.iter().collect();
+
+            count_vec.sort_by(|a, b| a.1.cmp(b.1));
+
+            let highest = count_vec[count_vec.len() - 1];
+
+            count_map.insert(highest.0.clone(), highest.1 + joker_count);
+        }
+
+        // Might be different after jokers
         if count_map.len() == 1 {
             return HandType::FiveOfAKind;
         }
@@ -97,7 +138,7 @@ impl Hand {
     }
 }
 
-impl FromStr for Hand {
+impl FromStr for Part2Hand {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -118,7 +159,7 @@ impl FromStr for Hand {
             )));
         }
 
-        Ok(Hand {
+        Ok(Part2Hand {
             cards,
             bid: bid_str
                 .parse()
@@ -127,15 +168,15 @@ impl FromStr for Hand {
     }
 }
 
-impl PartialEq for Hand {
+impl PartialEq for Part2Hand {
     fn eq(&self, other: &Self) -> bool {
         self.cards == other.cards
     }
 }
 
-impl Eq for Hand {}
+impl Eq for Part2Hand {}
 
-impl Ord for Hand {
+impl Ord for Part2Hand {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         if self == other {
             return Ordering::Equal;
@@ -152,64 +193,24 @@ impl Ord for Hand {
     }
 }
 
-impl PartialOrd for Hand {
+impl PartialOrd for Part2Hand {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
-fn parse_hands<T: Iterator<Item = Result<String, std::io::Error>>>(
-    input: T,
-) -> anyhow::Result<Vec<Hand>> {
-    let mut hands: Vec<Hand> = Vec::new();
-    for line in input {
-        hands.push(line?.parse()?);
-    }
-    Ok(hands)
-}
-
-fn total_winnings(hands: &mut Vec<Hand>) -> u32 {
-    hands.sort();
-
-    let mut sum: u32 = 0;
-    for (i, hand) in hands.iter().enumerate() {
-        sum += hand.bid * (i as u32 + 1);
-    }
-
-    sum
-}
-
-pub fn challenge<T: Iterator<Item = Result<String, std::io::Error>>>(
-    input: &mut T,
-) -> anyhow::Result<u32> {
-    let mut hands = parse_hands(input)?;
-    Ok(total_winnings(&mut hands))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn part1_example() {
-        // Given
-        let binding = vec![
-            "32T3K 765",
-            "T55J5 684",
-            "KK677 28",
-            "KTJJT 220",
-            "QQQJA 483",
-        ];
-
-        // When
-        let total = challenge(
-            &mut binding
-                .iter()
-                .map(|it| Ok::<_, std::io::Error>(it.to_string())),
+impl Display for Part2Hand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}{}{}{}{} {}",
+            self.cards[0], self.cards[1], self.cards[2], self.cards[3], self.cards[4], self.bid
         )
-        .unwrap();
+    }
+}
 
-        // Then
-        assert_eq!(6440, total);
+impl Hand for Part2Hand {
+    fn bid(&self) -> u32 {
+        self.bid
     }
 }
