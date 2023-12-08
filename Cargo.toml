@@ -1,9 +1,10 @@
 [package]
+edition = "2021"
 name = "adc23"
 version = "0.1.0"
-edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = { version = "1", features = ["std", "backtrace"] }
+anyhow = {version = "1", features = ["std", "backtrace"]}
+num-integer = "0.1"
