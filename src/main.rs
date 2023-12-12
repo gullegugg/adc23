@@ -14,9 +14,13 @@ fn main() -> anyhow::Result<()> {
         3 => adc23::day3::challenge(part, read_std_in()?).map(|it| it as u128),
         4 => adc23::day4::challenge(part, read_std_in()?).map(|it| it as u128),
         5 => adc23::day5::challenge(part, &mut std::io::stdin().lines()).map(|it| it as u128),
-        6 => adc23::day6::challenge(part, &mut std::io::stdin().lines()).map(|it| it as u128), // Sketchy but works
+        6 => adc23::day6::challenge(part, &mut std::io::stdin().lines()).map(|it| it as u128),
         7 => adc23::day7::challenge(part, &mut std::io::stdin().lines()).map(|it| it as u128),
         8 => adc23::day8::challenge(part, read_std_in()?),
+        9 => adc23::day9::challenge(part, read_std_in()?).map(|it| {
+            println!("Real answer {}", it);
+            it as u128
+        }),
         day => Err(Error::InvalidInput(format!("Day {} is not implemented", day)).into()),
     }?;
 
